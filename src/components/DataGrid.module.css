@@ -1,0 +1,354 @@
+/* ── DataGrid ────────────────────────────────────────────────────────────────
+   Theme-aware styling for the shared DataGrid. Colours use light-dark() /
+   Mantine CSS vars so the grid follows the in-app dark/light toggle and matches
+   SurfaceCard (border/background). Density is driven by the --dg-cell-py var set
+   on .root by the density prop. */
+
+.root {
+  --dg-border: light-dark(var(--mantine-color-gray-2), var(--mantine-color-dark-5));
+  --dg-surface: light-dark(var(--mantine-color-white), var(--mantine-color-dark-7));
+  --dg-surface-alt: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  --dg-header-bg: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  --dg-hover: light-dark(var(--mantine-color-gray-1), var(--mantine-color-dark-5));
+  --dg-accent: var(--mantine-color-brand-6);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+  width: 100%;
+  /* Anchor the subtree's inherited text colour to the (palette-overridable)
+     Mantine var, so bare Mantine <Text> (e.g. the toolbar title) follows a
+     template palette too — not just cells/headers that set color explicitly. */
+  color: var(--mantine-color-text);
+}
+
+/* Card-like frame around the scroller + footer, matching SurfaceCard. */
+.frame {
+  border: 1px solid var(--dg-border);
+  border-radius: var(--mantine-radius-lg);
+  background-color: var(--dg-surface);
+  overflow: hidden;
+}
+
+.scroll {
+  position: relative;
+  overflow: auto;
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.th {
+  position: relative;
+  background-color: var(--dg-header-bg);
+  color: var(--mantine-color-text);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+  border-bottom: 1px solid var(--dg-border);
+}
+
+.thInner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+/* Spanning group-header band (multi-level headers). Sits above the leaf-header
+   row; centred, with a divider below to visually band its child columns. */
+.groupHeader {
+  text-align: center;
+  border-bottom: 1px solid var(--dg-border);
+}
+.groupHeader .thInner {
+  justify-content: center;
+  font-weight: 700;
+}
+.groupHeader .thInner[data-align='left'] {
+  justify-content: flex-start;
+}
+.groupHeader .thInner[data-align='right'] {
+  justify-content: flex-end;
+}
+
+.thInner[data-align='center'] {
+  justify-content: center;
+}
+.thInner[data-align='right'] {
+  justify-content: flex-end;
+}
+
+.sortable {
+  cursor: pointer;
+}
+.sortable:hover {
+  color: var(--dg-accent);
+}
+
+.sortWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sortIcon {
+  opacity: 0.45;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+.sortIconActive {
+  opacity: 1;
+  color: var(--dg-accent);
+}
+
+/* Multi-sort priority badge (1, 2, 3…) shown when more than one column sorts. */
+.sortBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--mantine-color-white);
+  background: var(--dg-accent);
+}
+
+/* Native-DnD reorder affordances on header cells. */
+.draggable {
+  cursor: grab;
+}
+.dragging {
+  opacity: 0.4;
+}
+.dropTarget::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 2px;
+  background: var(--dg-accent);
+}
+
+/* Trailing header controls (filter funnel + ⋮ menu), pushed to the far end. */
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: auto;
+}
+
+/* Per-column header menu (pin/unpin). */
+.headerMenu {
+  display: inline-flex;
+}
+.headerMenuBtn {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.th:hover .headerMenuBtn,
+.headerMenuBtnActive {
+  opacity: 0.75;
+}
+.headerMenuBtn:hover,
+.headerMenuBtnActive:hover {
+  opacity: 1;
+  color: var(--dg-accent);
+}
+
+/* Column resize handle. */
+.resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 6px;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 2;
+}
+.resizer::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  right: 2px;
+  height: 60%;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+.resizer:hover::before,
+.resizerActive::before {
+  background: var(--dg-accent);
+}
+
+/* Vertical column separators (showColumnLines, default on). A right border on
+   every cell except the last in its row (the frame supplies the outer edge). */
+.columnLines .th,
+.columnLines .td {
+  border-inline-end: 1px solid var(--dg-border);
+}
+.columnLines .th:last-child,
+.columnLines .td:last-child {
+  border-inline-end: none;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────────── */
+
+.td {
+  padding: var(--dg-cell-py, 10px) 12px;
+  color: var(--mantine-color-text);
+  font-size: var(--mantine-font-size-sm);
+  border-bottom: 1px solid var(--dg-border);
+  background-color: var(--dg-surface);
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Framework/control columns (select / expand / actions / delete) hold centered
+   icons, not truncatable text — so no ellipsis marker and no clipping. */
+.controlCell {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.td[data-align='center'] {
+  text-align: center;
+}
+.td[data-align='right'] {
+  text-align: right;
+}
+
+.row {
+  transition: background-color 100ms ease;
+}
+.rowStriped:nth-of-type(even) .td {
+  background-color: var(--dg-surface-alt);
+}
+.rowHover:hover .td {
+  background-color: var(--dg-hover);
+}
+.rowClickable {
+  cursor: pointer;
+}
+
+/* Grouped / aggregated rows. */
+.groupCell {
+  font-weight: 600;
+}
+.groupCount {
+  color: var(--mantine-color-dimmed);
+  font-weight: 500;
+}
+.aggregated .td {
+  background-color: var(--dg-surface-alt);
+  font-weight: 600;
+}
+
+/* ── Inline editing (batch) ───────────────────────────────────────────────*/
+/* The active editor cell. */
+.editing {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  overflow: visible;
+}
+/* An editable cell (idle) — hint that it can be edited. */
+.cellEditable {
+  cursor: text;
+}
+/* A cell with a staged, unsaved change — marked with just a left accent bar
+   (no background tint, so it reads the same on striped and plain rows). */
+.cellDirty {
+  box-shadow: inset 3px 0 0 var(--dg-accent);
+}
+/* A staged cell that fails validation. */
+.cellError {
+  background-color: light-dark(var(--mantine-color-red-0), rgba(250, 82, 82, 0.14));
+  box-shadow: inset 3px 0 0 var(--mantine-color-red-6);
+}
+
+/* A row staged for deletion. */
+.rowDeleted .td {
+  background-color: light-dark(var(--mantine-color-red-0), rgba(250, 82, 82, 0.08));
+  color: var(--mantine-color-dimmed);
+  text-decoration: line-through;
+  text-decoration-color: light-dark(var(--mantine-color-red-4), var(--mantine-color-red-7));
+}
+/* Trash affordance — subtle until row hover. */
+.deleteBtn {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.row:hover .deleteBtn {
+  opacity: 0.85;
+}
+.deleteBtn:hover {
+  opacity: 1;
+}
+
+.detailCell {
+  padding: 0;
+  background-color: var(--dg-surface-alt);
+  border-bottom: 1px solid var(--dg-border);
+}
+.detailInner {
+  padding: var(--mantine-spacing-md);
+}
+
+/* ── Column pinning (sticky) ──────────────────────────────────────────────
+   Pinned cells need a solid background to cover scrolled content, so they
+   re-assert the surface colour and sit above normal cells. */
+.pinned {
+  position: sticky;
+  z-index: 1;
+  background-color: var(--dg-surface);
+}
+.th.pinned {
+  z-index: 3;
+  background-color: var(--dg-header-bg);
+}
+.pinnedLeftLast {
+  box-shadow: 8px 0 8px -8px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
+}
+.pinnedRightFirst {
+  box-shadow: -8px 0 8px -8px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.5));
+}
+
+/* Sticky header row. */
+.stickyHeader .th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.stickyHeader .th.pinned {
+  z-index: 4;
+}
+
+/* ── States ───────────────────────────────────────────────────────────────*/
+.stateWrap {
+  padding: calc(var(--mantine-spacing-xl) * 1.5) var(--mantine-spacing-md);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border-top: 1px solid var(--dg-border);
+  background-color: var(--dg-surface);
+}

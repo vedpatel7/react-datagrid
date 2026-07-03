@@ -1,0 +1,78 @@
+{
+  "name": "@ved_patel/react-datagrid",
+  "version": "0.1.0",
+  "description": "A powerful, fully client-side React data grid built on TanStack Table + Mantine: multi-sort, fuzzy search, per-column filters, grouping/aggregation, banded headers, inline batch editing, row virtualization, column pinning/reorder/resize, and multi-format export (CSV/Excel/JSON/print/clipboard).",
+  "type": "module",
+  "license": "MIT",
+  "author": "Ved Patel",
+  "keywords": [
+    "react",
+    "datagrid",
+    "data-grid",
+    "table",
+    "react-table",
+    "mantine",
+    "tanstack",
+    "virtualized",
+    "editable-table",
+    "grouping",
+    "pagination",
+    "csv-export",
+    "typescript"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@mantine/core": ">=9",
+    "@mantine/dates": ">=9",
+    "@mantine/notifications": ">=9",
+    "@tabler/icons-react": ">=3",
+    "@tanstack/match-sorter-utils": ">=8",
+    "@tanstack/react-table": ">=8",
+    "@tanstack/react-virtual": ">=3",
+    "dayjs": ">=1",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@mantine/core": "^9.3.1",
+    "@mantine/dates": "^9.3.1",
+    "@mantine/notifications": "^9.3.1",
+    "@tabler/icons-react": "^3.44.0",
+    "@tanstack/match-sorter-utils": "^8.19.4",
+    "@tanstack/react-table": "^8",
+    "@tanstack/react-virtual": "^3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "dayjs": "^1.11.21",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
