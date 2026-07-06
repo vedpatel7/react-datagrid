@@ -238,6 +238,18 @@ export interface DataGridProps<T> {
   /** Column ids to group by (enables grouping + aggregation rows). */
   grouping?: string[];
 
+  // ── Tree / hierarchical data ──────────────────────────────────────────
+  /** Return a row's child rows. Providing this enables tree mode: real nested
+   *  rows that expand/collapse inline with an indented toggle. Distinct from
+   *  grouping (synthetic buckets) and detail rows (a panel under a row), and
+   *  mutually exclusive with both. Ignored when `virtualized`. */
+  getSubRows?: (row: T) => T[] | undefined;
+  /** Column id that carries the tree expand toggle + indentation. Defaults to
+   *  the first data column. */
+  treeColumnId?: string;
+  /** Start with all tree rows expanded. Default: collapsed. */
+  defaultExpanded?: boolean;
+
   // ── Presentation ──────────────────────────────────────────────────────
   title?: ReactNode;
   /** Extra controls rendered on the right of the toolbar. */

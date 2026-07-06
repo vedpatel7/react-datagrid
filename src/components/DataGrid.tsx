@@ -25,6 +25,7 @@ import {
   IconArrowBarToRight,
   IconArrowsSort,
   IconChevronDown,
+  IconChevronRight,
   IconChevronUp,
   IconDotsVertical,
   IconFilter,
@@ -176,6 +177,9 @@ export function DataGrid<T>({
   enableExport = false,
   exportFileName = "export",
   grouping: groupingProp,
+  getSubRows,
+  treeColumnId,
+  defaultExpanded = false,
   title,
   toolbarActions,
   loading = false,
@@ -188,15 +192,27 @@ export function DataGrid<T>({
   className,
   palette,
 }: DataGridProps<T>) {
-  // Detail expansion and grouping are single-tbody features; they're disabled
-  // in virtualized mode (which flattens rows for the virtualizer).
-  const useExpansion = !!renderDetail && !virtualized;
-  const useGrouping = !!groupingProp?.length && !virtualized;
+  // Detail expansion, grouping and tree data are single-tbody features; they're
+  // disabled in virtualized mode (which flattens rows for the virtualizer).
+  // Tree mode takes precedence and is mutually exclusive with detail/grouping:
+  // all three describe row structure differently and share the expanded state.
+  const useTree = !!getSubRows && !virtualized;
+  const useExpansion = !useTree && !!renderDetail && !virtualized;
+  const useGrouping = !useTree && !!groupingProp?.length && !virtualized;
 
   // Flattened leaf columns (unwraps header groups) with their depth-first index —
   // all leaf-level logic (pinning, editing, ids) works off this, not the raw
   // schema which may nest groups.
   const leaves = useMemo(() => flattenColumns(columns), [columns]);
+
+  // In tree mode, the expand toggle + indentation live on this data column
+  // (explicit `treeColumnId`, else the first data column).
+  const treeColId = useMemo(() => {
+    if (!useTree) return undefined;
+    if (treeColumnId) return treeColumnId;
+    const first = leaves[0];
+    return first ? columnId(first.col, first.index) : undefined;
+  }, [useTree, treeColumnId, leaves]);
 
   // Editing is on only if enabled and at least one leaf column opts in.
   const editingEnabled =
@@ -327,7 +343,9 @@ export function DataGrid<T>({
     normalizePinning(initialPinning),
   );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [expanded, setExpanded] = useState<ExpandedState>(
+    defaultExpanded ? true : {},
+  );
   const [grouping, setGrouping] = useState<GroupingState>(groupingProp ?? []);
 
   // Keep order/pinning/grouping in sync when the column schema changes.
@@ -357,6 +375,10 @@ export function DataGrid<T>({
       grouping,
     },
     getRowId,
+    // Tree mode: read child rows from the data. Filter from leaf rows up so a
+    // matching descendant keeps its ancestors visible (else parents vanish).
+    getSubRows: useTree ? getSubRows : undefined,
+    filterFromLeafRows: useTree,
     enableRowSelection,
     enableColumnResizing,
     columnResizeMode: "onChange",
@@ -364,7 +386,11 @@ export function DataGrid<T>({
     // third click on a column removes it, and the toolbar offers "clear all".
     isMultiSortEvent: () => true,
     globalFilterFn: fuzzyFilter,
-    getRowCanExpand: useExpansion ? () => true : undefined,
+    getRowCanExpand: useTree
+      ? (row) => row.subRows.length > 0
+      : useExpansion
+        ? () => true
+        : undefined,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
@@ -387,7 +413,7 @@ export function DataGrid<T>({
     ...(enablePagination && !virtualized
       ? { getPaginationRowModel: getPaginationRowModel() }
       : {}),
-    ...(useExpansion || useGrouping
+    ...(useExpansion || useGrouping || useTree
       ? { getExpandedRowModel: getExpandedRowModel() }
       : {}),
     ...(useGrouping ? { getGroupedRowModel: getGroupedRowModel() } : {}),
@@ -771,6 +797,40 @@ export function DataGrid<T>({
     return flexRender(cell.column.columnDef.cell, cell.getContext());
   };
 
+  // Tree mode: wrap the tree column's content with depth indentation plus an
+  // expand/collapse toggle (a spacer keeps leaf-row content aligned).
+  const renderTreeCell = (row: Row<T>, content: React.ReactNode) => (
+    <span
+      className={classes.treeCell}
+      style={{ paddingInlineStart: row.depth * 16 }}
+    >
+      {row.getCanExpand() ? (
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          size="xs"
+          className={classes.treeToggle}
+          aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
+          onClick={(e) => {
+            e.stopPropagation();
+            row.toggleExpanded();
+          }}
+        >
+          <IconChevronRight
+            size={14}
+            style={{
+              transition: "transform 120ms ease",
+              transform: row.getIsExpanded() ? "rotate(90deg)" : "none",
+            }}
+          />
+        </ActionIcon>
+      ) : (
+        <span className={classes.treeSpacer} />
+      )}
+      {content}
+    </span>
+  );
+
   // Render one cell's editor (custom `renderEditor` or the built-in EditableCell).
   const renderEditor = (cell: Cell<T, unknown>, row: Row<T>) => {
     const meta = cell.column.columnDef.meta;
@@ -928,7 +988,14 @@ export function DataGrid<T>({
               }
               onClickCapture={editTrigger === "click" ? openEditor : undefined}
             >
-              {isEditing ? renderEditor(cell, row) : renderCell(cell)}
+              {useTree && colId === treeColId
+                ? renderTreeCell(
+                    row,
+                    isEditing ? renderEditor(cell, row) : renderCell(cell),
+                  )
+                : isEditing
+                  ? renderEditor(cell, row)
+                  : renderCell(cell)}
             </Table.Td>
           );
         })}

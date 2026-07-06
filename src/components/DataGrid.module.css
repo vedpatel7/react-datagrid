@@ -175,6 +175,22 @@
   color: var(--dg-accent);
 }
 
+/* Tree mode: indented cell with an inline expand toggle (or a spacer on leaf
+   rows so their content lines up with expandable siblings). */
+.treeCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.treeToggle {
+  flex: none;
+}
+.treeSpacer {
+  flex: none;
+  width: 18px;
+}
+
 /* Column resize handle. */
 .resizer {
   position: absolute;
