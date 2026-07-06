@@ -1029,7 +1029,6 @@ export function DataGrid<T>({
                           enableFilters={enableColumnFilters}
                           openControl={openControl}
                           onOpenControl={setOpenControl}
-                          sortCount={sorting.length}
                           dragId={dragId}
                           overId={overId}
                           onDragStart={setDragId}
@@ -1165,69 +1164,6 @@ function GroupHeaderCell<T>({ header }: { header: Header<T, unknown> }) {
   );
 }
 
-// ── Per-column filter popover (funnel icon → dropdown filter control) ───────
-// Replaces the always-on filter row: filtering is opt-in per column via a
-// funnel icon that fills/accents when a filter is active.
-function FilterPopover<T>({
-  column,
-  opened,
-  onOpenChange,
-}: {
-  column: Column<T, unknown>;
-  opened: boolean;
-  onOpenChange: (opened: boolean) => void;
-}) {
-  const active = column.getIsFiltered();
-  const { portalClassName } = useGridTheme();
-  return (
-    <Popover
-      opened={opened}
-      onChange={onOpenChange}
-      position="bottom-end"
-      withinPortal
-      shadow="md"
-      width={244}
-      trapFocus
-      classNames={{ dropdown: portalClassName }}
-    >
-      <Popover.Target>
-        <ActionIcon
-          variant="subtle"
-          color={active ? undefined : "gray"}
-          size="xs"
-          aria-label={active ? "Edit column filter" : "Filter column"}
-          className={cx(
-            classes.headerMenuBtn,
-            active && classes.headerMenuBtnActive,
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenChange(!opened);
-          }}
-        >
-          {active ? <IconFilterFilled size={13} /> : <IconFilter size={13} />}
-        </ActionIcon>
-      </Popover.Target>
-      <Popover.Dropdown onClick={(e) => e.stopPropagation()}>
-        <Stack gap="xs">
-          <ColumnFilter column={column} />
-          {active && (
-            <Button
-              variant="subtle"
-              color="gray"
-              size="compact-xs"
-              leftSection={<IconFilterOff size={13} />}
-              onClick={() => column.setFilterValue(undefined)}
-            >
-              Clear filter
-            </Button>
-          )}
-        </Stack>
-      </Popover.Dropdown>
-    </Popover>
-  );
-}
-
 // ── Header cell (sort + resize + native-DnD reorder + pinning) ──────────────
 interface HeaderCellProps<T> {
   header: Header<T, unknown>;
@@ -1237,8 +1173,6 @@ interface HeaderCellProps<T> {
   /** Currently-open header control key (`${colId}:menu|filter`) or null. */
   openControl: string | null;
   onOpenControl: React.Dispatch<React.SetStateAction<string | null>>;
-  /** Number of active sorts — a badge shows the sort priority when > 1. */
-  sortCount: number;
   dragId: string | null;
   overId: string | null;
   onDragStart: (id: string) => void;
@@ -1254,7 +1188,6 @@ function HeaderCell<T>({
   enableFilters,
   openControl,
   onOpenControl,
-  sortCount,
   dragId,
   overId,
   onDragStart,
@@ -1273,11 +1206,12 @@ function HeaderCell<T>({
   const canFilter =
     enableFilters && column.getCanFilter() && !isControlColumn(column.id);
   const pinned = column.getIsPinned();
+  const filtered = column.getIsFiltered();
   const pin = pinProps(column);
-  // The header ⋮ menu offers sort actions (any sortable column) and, when
-  // enabled, pin actions.
-  const showMenu = canSort || canPin;
-  const showSortBadge = !!sorted && sortCount > 1;
+  // The header ⋮ menu offers sort actions (any sortable column), filter access
+  // (opens the filter popover), and, when enabled, pin actions.
+  const showMenu = canSort || canPin || canFilter;
+  const showSortBadge = !!sorted;
   // Controlled open-state keys (shared across all columns → one open at a time).
   const menuKey = `${column.id}:menu`;
   const filterKey = `${column.id}:filter`;
@@ -1353,7 +1287,7 @@ function HeaderCell<T>({
             )}
           </span>
         )}
-        {(canFilter || showMenu) && (
+        {showMenu && (
           // Wrapper stops the click/drag bubbling to the sortable/draggable header.
           <span
             className={classes.headerActions}
@@ -1362,15 +1296,43 @@ function HeaderCell<T>({
             onMouseDown={(e) => e.stopPropagation()}
           >
             {canFilter && (
-              <FilterPopover
-                column={column}
+              // Controlled, no visible trigger — opened from the ⋮ menu's
+              // "Filter" item and anchored to an invisible box over the actions
+              // so it drops beneath the ⋮ button.
+              <Popover
                 opened={openControl === filterKey}
-                onOpenChange={(o) =>
+                onChange={(o) =>
                   onOpenControl((cur) =>
                     o ? filterKey : cur === filterKey ? null : cur,
                   )
                 }
-              />
+                position="bottom-end"
+                withinPortal
+                shadow="md"
+                width={244}
+                trapFocus
+                classNames={{ dropdown: portalClassName }}
+              >
+                <Popover.Target>
+                  <span aria-hidden className={classes.filterAnchor} />
+                </Popover.Target>
+                <Popover.Dropdown onClick={(e) => e.stopPropagation()}>
+                  <Stack gap="xs">
+                    <ColumnFilter column={column} />
+                    {filtered && (
+                      <Button
+                        variant="subtle"
+                        color="gray"
+                        size="compact-xs"
+                        leftSection={<IconFilterOff size={13} />}
+                        onClick={() => column.setFilterValue(undefined)}
+                      >
+                        Clear filter
+                      </Button>
+                    )}
+                  </Stack>
+                </Popover.Dropdown>
+              </Popover>
             )}
             {showMenu && (
               <Menu
@@ -1393,7 +1355,8 @@ function HeaderCell<T>({
                     aria-label="Column options"
                     className={cx(
                       classes.headerMenuBtn,
-                      (pinned || sorted) && classes.headerMenuBtnActive,
+                      (pinned || sorted || filtered) &&
+                        classes.headerMenuBtnActive,
                     )}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -1456,6 +1419,32 @@ function HeaderCell<T>({
                       >
                         Unpin
                       </Menu.Item>
+                    </>
+                  )}
+                  {canFilter && (
+                    <>
+                      {(canSort || canPin) && <Menu.Divider />}
+                      <Menu.Label>Filter</Menu.Label>
+                      <Menu.Item
+                        leftSection={
+                          filtered ? (
+                            <IconFilterFilled size={14} />
+                          ) : (
+                            <IconFilter size={14} />
+                          )
+                        }
+                        onClick={() => onOpenControl(filterKey)}
+                      >
+                        {filtered ? "Edit filter" : "Filter"}
+                      </Menu.Item>
+                      {filtered && (
+                        <Menu.Item
+                          leftSection={<IconFilterOff size={14} />}
+                          onClick={() => column.setFilterValue(undefined)}
+                        >
+                          Clear filter
+                        </Menu.Item>
+                      )}
                     </>
                   )}
                 </Menu.Dropdown>

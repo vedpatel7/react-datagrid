@@ -142,10 +142,19 @@
 
 /* Trailing header controls (filter funnel + ⋮ menu), pushed to the far end. */
 .headerActions {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 2px;
   margin-inline-start: auto;
+}
+
+/* Invisible reference box the (menu-triggered) filter popover anchors to, so
+   the popover drops under the ⋮ button without its own visible trigger. */
+.filterAnchor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
 /* Per-column header menu (pin/unpin). */
