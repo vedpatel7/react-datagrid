@@ -104,6 +104,11 @@ const DENSITY_PY: Record<string, string> = {
   comfortable: "14px",
 };
 
+// Virtualization needs a bounded, scrollable container to work; when the caller
+// enables `virtualized` without a `maxHeight`, fall back to this so the grid
+// scrolls correctly instead of rendering a few rows over a blank gap.
+const DEFAULT_VIRTUAL_MAX_HEIGHT = 400;
+
 /** Global-search filter: fuzzy (typo-tolerant, non-contiguous) match per cell
  *  via match-sorter's rankItem. A row passes if the search text ranks against
  *  the cell value. Declared generic (not a `FilterFn<unknown>` const) so TS
@@ -215,8 +220,11 @@ export function DataGrid<T>({
   }, [useTree, treeColumnId, leaves]);
 
   // Editing is on only if enabled and at least one leaf column opts in.
+  // Guarded off in tree mode: the editing draft, Add-row and row-delete are all
+  // flat-data operations (they prepend/diff the top-level array and can't
+  // express hierarchy), so they'd misbehave against nested subRows.
   const editingEnabled =
-    enableEditing && leaves.some(({ col }) => col.editable);
+    enableEditing && !useTree && leaves.some(({ col }) => col.editable);
   const deleteEnabled = editingEnabled && enableRowDelete;
 
   // ── Template theming ──────────────────────────────────────────────────────
@@ -248,6 +256,7 @@ export function DataGrid<T>({
         hasActions: !!rowActions,
         rowActions,
         enableDelete: deleteEnabled,
+        treeColumnId: treeColId,
       }),
     [
       columns,
@@ -256,6 +265,7 @@ export function DataGrid<T>({
       useExpansion,
       rowActions,
       deleteEnabled,
+      treeColId,
     ],
   );
 
@@ -654,8 +664,23 @@ export function DataGrid<T>({
     if (!dirty || saving) return;
     // Reveal any still-hidden validation errors (untouched required fields on a
     // new row) and abort — don't save with errors, but now show the user why.
+    // The erroring cell can be off-screen (filtered out, on another page), so a
+    // toast tells them how many there are and whether the view may be hiding
+    // some, since the disabled-looking count alone is a dead end.
     if (errorCount > 0) {
       setSubmitAttempted(true);
+      const mayBeHidden =
+        columnFilters.length > 0 ||
+        !!globalFilter ||
+        (enablePagination && !virtualized && table.getPageCount() > 1);
+      notifications.show({
+        id: "grid-save-errors",
+        color: "red",
+        title: `${errorCount} cell${errorCount === 1 ? "" : "s"} need fixing`,
+        message: mayBeHidden
+          ? "Some may be hidden by the current filter, search, or page — clear them to see every error."
+          : "Fix the highlighted cells, then save.",
+      });
       return;
     }
     setEditingCell(null);
@@ -677,7 +702,18 @@ export function DataGrid<T>({
         setSaving(false);
       }
     }
-  }, [gridChanges, dirty, errorCount, saving, onSave]);
+  }, [
+    gridChanges,
+    dirty,
+    errorCount,
+    saving,
+    onSave,
+    columnFilters,
+    globalFilter,
+    enablePagination,
+    virtualized,
+    table,
+  ]);
 
   // Single open header control (a `${colId}:menu` / `${colId}:filter` key, or
   // null) — controls every column's ⋮ menu and filter popover so only one can
@@ -715,6 +751,18 @@ export function DataGrid<T>({
   const paddingBottom = virtualRows.length
     ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
     : 0;
+
+  // Virtualization (and the sticky header) need a bounded scroller height; if
+  // one wasn't given while virtualizing, fall back to a default and warn.
+  const effectiveMaxHeight =
+    maxHeight ?? (virtualized ? DEFAULT_VIRTUAL_MAX_HEIGHT : undefined);
+  useEffect(() => {
+    if (virtualized && maxHeight == null) {
+      console.warn(
+        `[DataGrid] \`virtualized\` needs a bounded height but no \`maxHeight\` was provided — falling back to ${DEFAULT_VIRTUAL_MAX_HEIGHT}px. Set \`maxHeight\` to match your layout.`,
+      );
+    }
+  }, [virtualized, maxHeight]);
 
   // Snapshot the current (filtered) rows across the visible, non-control
   // columns — the shared source for every export format.
@@ -1072,12 +1120,15 @@ export function DataGrid<T>({
           <div
             ref={scrollRef}
             className={classes.scroll}
-            style={{ maxHeight, overflowY: maxHeight ? "auto" : undefined }}
+            style={{
+              maxHeight: effectiveMaxHeight,
+              overflowY: effectiveMaxHeight ? "auto" : undefined,
+            }}
           >
             <Table
               className={cx(
                 classes.table,
-                stickyHeader && maxHeight && classes.stickyHeader,
+                stickyHeader && effectiveMaxHeight && classes.stickyHeader,
               )}
               style={{ width: table.getTotalSize(), tableLayout: "fixed" }}
             >

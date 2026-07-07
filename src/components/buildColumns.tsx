@@ -70,6 +70,9 @@ export interface BuildColumnsOptions<T> {
   rowActions?: (row: T) => React.ReactNode;
   /** Append the delete/restore control column (rendered by DataGrid). */
   enableDelete: boolean;
+  /** Tree mode: id of the column carrying the expand toggle + indentation. It's
+   *  forced non-hideable, since hiding it would remove the only expand control. */
+  treeColumnId?: string;
 }
 
 /** Internal ids for the framework-managed columns. */
@@ -324,7 +327,14 @@ export function buildColumns<T>(
       };
       return groupDef as unknown as ColumnDef<T, unknown>;
     }
-    return buildLeaf(node, leafIndex++);
+    const def = buildLeaf(node, leafIndex++);
+    // Tree mode: the expand toggle + indentation live only on this column, so
+    // it must stay visible — hiding it would strip every toggle and leave rows
+    // stuck in their current expand state.
+    if (opts.treeColumnId && def.id === opts.treeColumnId) {
+      (def as { enableHiding?: boolean }).enableHiding = false;
+    }
+    return def;
   };
   columns.forEach((node) => defs.push(buildNode(node)));
 

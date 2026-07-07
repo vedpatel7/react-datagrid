@@ -153,7 +153,7 @@ export function GridToolbar<T>({
               leftSection={<IconDeviceFloppy size={14} />}
               onClick={onSave}
               loading={saving}
-              disabled={errorCount > 0}
+              disabled={saving}
             >
               Save
             </Button>
@@ -185,7 +185,15 @@ export function GridToolbar<T>({
               {hideableColumns.map((column) => (
                 <Menu.Item
                   key={column.id}
-                  onClick={() => column.toggleVisibility()}
+                  onClick={() => {
+                    // Hiding a filtered column would leave an orphaned filter
+                    // with no visible control to clear it, so drop the filter
+                    // as the column is hidden.
+                    if (column.getIsVisible() && column.getIsFiltered()) {
+                      column.setFilterValue(undefined);
+                    }
+                    column.toggleVisibility();
+                  }}
                   leftSection={
                     <Checkbox
                       size="xs"

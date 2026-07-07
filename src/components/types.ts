@@ -231,7 +231,9 @@ export interface DataGridProps<T> {
    *  Detail/grouping expansion is disabled in this mode. */
   virtualized?: boolean;
   estimateRowHeight?: number;
-  /** Scroller max height. Required for virtualization / sticky header. */
+  /** Scroller max height. Required for the sticky header. For `virtualized` it
+   *  defaults to 400px when omitted (virtualization needs a bounded height);
+   *  set it explicitly to fit your layout. */
   maxHeight?: number | string;
   enableExport?: boolean;
   exportFileName?: string;
@@ -242,7 +244,10 @@ export interface DataGridProps<T> {
   /** Return a row's child rows. Providing this enables tree mode: real nested
    *  rows that expand/collapse inline with an indented toggle. Distinct from
    *  grouping (synthetic buckets) and detail rows (a panel under a row), and
-   *  mutually exclusive with both. Ignored when `virtualized`. */
+   *  mutually exclusive with both. Ignored when `virtualized`.
+   *
+   *  Note: inline editing is flat-data only, so `enableEditing`, `createRow`
+   *  (Add row) and `enableRowDelete` are disabled while tree mode is active. */
   getSubRows?: (row: T) => T[] | undefined;
   /** Column id that carries the tree expand toggle + indentation. Defaults to
    *  the first data column. */
