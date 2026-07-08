@@ -1130,7 +1130,11 @@ export function DataGrid<T>({
                 classes.table,
                 stickyHeader && effectiveMaxHeight && classes.stickyHeader,
               )}
-              style={{ width: table.getTotalSize(), tableLayout: "fixed" }}
+              style={{
+                width: "100%",
+                minWidth: table.getTotalSize(),
+                tableLayout: "fixed",
+              }}
             >
               <Table.Thead>
                 {table.getHeaderGroups().map((headerGroup) => (

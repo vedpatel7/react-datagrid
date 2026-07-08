@@ -24,10 +24,7 @@
 
 /* Card-like frame around the scroller + footer, matching SurfaceCard. */
 .frame {
-  border: 1px solid var(--dg-border);
-  border-radius: var(--mantine-radius-lg);
-  background-color: var(--dg-surface);
-  overflow: hidden;
+  position: relative;
 }
 
 .scroll {
@@ -375,5 +372,4 @@
   gap: var(--mantine-spacing-sm);
   padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
   border-top: 1px solid var(--dg-border);
-  background-color: var(--dg-surface);
 }

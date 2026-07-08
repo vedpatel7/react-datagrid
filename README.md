@@ -34,18 +34,18 @@ npm install react react-dom \
 **1. Import the stylesheet once** (e.g. in your app entry):
 
 ```ts
-import '@ved_patel/react-datagrid/styles.css';
+import "@ved_patel/react-datagrid/styles.css";
 ```
 
 **2. Wrap your app in Mantine's providers.** `MantineProvider` is required;
 `Notifications` is needed for the "Copy to clipboard" export toast:
 
 ```tsx
-import { MantineProvider } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
-import '@mantine/core/styles.css';
-import '@mantine/dates/styles.css';
-import '@mantine/notifications/styles.css';
+import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
+import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
+import "@mantine/notifications/styles.css";
 
 export function Root() {
   return (
@@ -60,8 +60,8 @@ export function Root() {
 Then import the grid anywhere:
 
 ```tsx
-import { DataGrid } from '@ved_patel/react-datagrid';
-import type { GridColumnNode } from '@ved_patel/react-datagrid';
+import { DataGrid } from "@ved_patel/react-datagrid";
+import type { GridColumnNode } from "@ved_patel/react-datagrid";
 ```
 
 ---
@@ -69,13 +69,19 @@ import type { GridColumnNode } from '@ved_patel/react-datagrid';
 ## Quick start
 
 ```tsx
-type User = { id: string; name: string; email: string; age: number; joined: string };
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  age: number;
+  joined: string;
+};
 
 const columns: GridColumnNode<User>[] = [
-  { accessor: 'name', header: 'Name' },
-  { accessor: 'email', header: 'Email' },
-  { accessor: 'age', header: 'Age', align: 'right', filter: 'number' },
-  { accessor: 'joined', header: 'Joined', filter: 'date' },
+  { accessor: "name", header: "Name" },
+  { accessor: "email", header: "Email" },
+  { accessor: "age", header: "Age", align: "right", filter: "number" },
+  { accessor: "joined", header: "Joined", filter: "date" },
 ];
 
 <DataGrid<User>
@@ -98,41 +104,41 @@ Each entry is **either** a leaf column (`GridColumn<T>`) **or** a header group
 
 ### Leaf column (`GridColumn<T>`)
 
-| Field | Purpose |
-| --- | --- |
-| `accessor` | `keyof T` (object key) **or** `(row) => value` function. |
-| `id` | Stable id; defaults to the string `accessor`. Required for function accessors used with editing/pinning. |
-| `header` | Header content (string or node). |
-| `headerLabel` | Plain-text label used by the visibility menu / export when `header` is a node. |
-| `render` | `(value, row) => ReactNode` custom cell renderer. |
-| `align` | `'left' \| 'center' \| 'right'`. |
-| `width` / `minWidth` / `maxWidth` | Column sizing in px. |
-| `enableSorting` / `enableResizing` / `enableHiding` / `enablePinning` | Per-column feature opt-outs (default `true`). |
-| `pinned` | `'left' \| 'right'` — pin declaratively. |
-| `filter` | `'text' \| 'select' \| 'number' \| 'date' \| false`. |
-| `filterOptions` | `{ value, label }[]` for a `'select'` filter (auto-derived from data if omitted). |
-| `dateFormat` | dayjs token for date columns (drives cell display, picker, editor). Default `'MMM D, YYYY'`. |
-| `aggregate` | `'sum' \| 'count' \| 'min' \| 'max' \| 'mean' \| 'extent' \| 'unique' \| 'uniqueCount'` (for grouping). |
-| `renderAggregated` | Renderer for the aggregated value in a group row. |
-| `editable` | Make the column editable (needs grid `enableEditing`). |
-| `editor` | `'text' \| 'number' \| 'select' \| 'checkbox' \| 'date'` (inferred from `filter` if omitted). |
-| `editOptions` | Options for a `'select'` editor (falls back to `filterOptions`). |
-| `field` | Field the editor writes to when `accessor` is a function. |
-| `validate` | `(value, row) => string \| null` — a message blocks the commit. |
-| `parseValue` | Coerce the raw editor value before validate/commit. |
-| `renderEditor` | Full custom-editor escape hatch (`EditContext<T>`). |
-| `columnDef` | Raw TanStack `ColumnDef` partial, merged last (wins). |
+| Field                                                                 | Purpose                                                                                                  |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `accessor`                                                            | `keyof T` (object key) **or** `(row) => value` function.                                                 |
+| `id`                                                                  | Stable id; defaults to the string `accessor`. Required for function accessors used with editing/pinning. |
+| `header`                                                              | Header content (string or node).                                                                         |
+| `headerLabel`                                                         | Plain-text label used by the visibility menu / export when `header` is a node.                           |
+| `render`                                                              | `(value, row) => ReactNode` custom cell renderer.                                                        |
+| `align`                                                               | `'left' \| 'center' \| 'right'`.                                                                         |
+| `width` / `minWidth` / `maxWidth`                                     | Column sizing in px.                                                                                     |
+| `enableSorting` / `enableResizing` / `enableHiding` / `enablePinning` | Per-column feature opt-outs (default `true`).                                                            |
+| `pinned`                                                              | `'left' \| 'right'` — pin declaratively.                                                                 |
+| `filter`                                                              | `'text' \| 'select' \| 'number' \| 'date' \| false`.                                                     |
+| `filterOptions`                                                       | `{ value, label }[]` for a `'select'` filter (auto-derived from data if omitted).                        |
+| `dateFormat`                                                          | dayjs token for date columns (drives cell display, picker, editor). Default `'MMM D, YYYY'`.             |
+| `aggregate`                                                           | `'sum' \| 'count' \| 'min' \| 'max' \| 'mean' \| 'extent' \| 'unique' \| 'uniqueCount'` (for grouping).  |
+| `renderAggregated`                                                    | Renderer for the aggregated value in a group row.                                                        |
+| `editable`                                                            | Make the column editable (needs grid `enableEditing`).                                                   |
+| `editor`                                                              | `'text' \| 'number' \| 'select' \| 'checkbox' \| 'date'` (inferred from `filter` if omitted).            |
+| `editOptions`                                                         | Options for a `'select'` editor (falls back to `filterOptions`).                                         |
+| `field`                                                               | Field the editor writes to when `accessor` is a function.                                                |
+| `validate`                                                            | `(value, row) => string \| null` — a message blocks the commit.                                          |
+| `parseValue`                                                          | Coerce the raw editor value before validate/commit.                                                      |
+| `renderEditor`                                                        | Full custom-editor escape hatch (`EditContext<T>`).                                                      |
+| `columnDef`                                                           | Raw TanStack `ColumnDef` partial, merged last (wins).                                                    |
 
 ### Header group (`GridColumnGroup<T>`) — banded headers
 
 ```tsx
 const columns: GridColumnNode<User>[] = [
-  { accessor: 'name', header: 'Name' },
+  { accessor: "name", header: "Name" },
   {
-    header: 'Contact', // spanning band
+    header: "Contact", // spanning band
     columns: [
-      { accessor: 'email', header: 'Email' },
-      { accessor: 'phone', header: 'Phone' },
+      { accessor: "email", header: "Email" },
+      { accessor: "phone", header: "Phone" },
     ],
   },
 ];
@@ -147,47 +153,47 @@ standalone leaves span the header rows.
 
 ### Core
 
-| Prop | Default | Notes |
-| --- | --- | --- |
-| `data: T[]` | — | Row data. |
-| `columns` | — | The schema above. |
-| `getRowId` | index | Strongly recommended with selection/expansion/editing. |
-| `enableGlobalFilter` | `true` | Fuzzy (typo-tolerant) toolbar search. |
-| `enableColumnFilters` | `false` | Per-column filters, opened from each column's ⋮ header menu. |
-| `enablePagination` | `true` | Ignored when `virtualized`. |
-| `pageSize` / `pageSizeOptions` | — | Page controls. |
+| Prop                           | Default | Notes                                                        |
+| ------------------------------ | ------- | ------------------------------------------------------------ |
+| `data: T[]`                    | —       | Row data.                                                    |
+| `columns`                      | —       | The schema above.                                            |
+| `getRowId`                     | index   | Strongly recommended with selection/expansion/editing.       |
+| `enableGlobalFilter`           | `true`  | Fuzzy (typo-tolerant) toolbar search.                        |
+| `enableColumnFilters`          | `false` | Per-column filters, opened from each column's ⋮ header menu. |
+| `enablePagination`             | `true`  | Ignored when `virtualized`.                                  |
+| `pageSize` / `pageSizeOptions` | —       | Page controls.                                               |
 
 ### Column controls
 
-| Prop | Notes |
-| --- | --- |
-| `enableColumnResizing` | Drag column edges. |
-| `enableColumnReordering` | Native HTML5 drag-reorder. |
-| `enableColumnVisibility` (default `true`) | Toolbar show/hide menu. |
-| `enablePinning` | Per-column header ⋮ pin/unpin (declarative `pinned` always works). |
-| `showColumnLines` (default `true`) | Vertical separators. |
+| Prop                                      | Notes                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| `enableColumnResizing`                    | Drag column edges.                                                 |
+| `enableColumnReordering`                  | Native HTML5 drag-reorder.                                         |
+| `enableColumnVisibility` (default `true`) | Toolbar show/hide menu.                                            |
+| `enablePinning`                           | Per-column header ⋮ pin/unpin (declarative `pinned` always works). |
+| `showColumnLines` (default `true`)        | Vertical separators.                                               |
 
 ### Row features
 
-| Prop | Notes |
-| --- | --- |
-| `enableRowSelection` | `boolean \| (row) => boolean`. |
-| `selectAllScope` | `'all'` (default — every filtered row across pages) or `'page'` (current page only). |
-| `onRowSelectionChange` | `(rows: T[]) => void`. |
-| `renderDetail` | `(row) => ReactNode` expandable detail panel. |
-| `rowActions` | `(row) => ReactNode` trailing actions cell. |
-| `onRowClick` | `(row) => void`. |
+| Prop                   | Notes                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `enableRowSelection`   | `boolean \| (row) => boolean`.                                                       |
+| `selectAllScope`       | `'all'` (default — every filtered row across pages) or `'page'` (current page only). |
+| `onRowSelectionChange` | `(rows: T[]) => void`.                                                               |
+| `renderDetail`         | `(row) => ReactNode` expandable detail panel.                                        |
+| `rowActions`           | `(row) => ReactNode` trailing actions cell.                                          |
+| `onRowClick`           | `(row) => void`.                                                                     |
 
 ### Inline editing (batch)
 
-| Prop | Notes |
-| --- | --- |
-| `enableEditing` | Turn on inline editing for `editable` columns. Edits stage into a draft. |
-| `editTrigger` | `'doubleClick'` (default) or `'click'`. |
-| `createRow` | `() => T` — shows an "Add row" button (prepends + focuses). Must set a unique id. |
-| `enableRowDelete` | Per-row trash/restore + bulk "Delete selected". |
-| `onSave` | `(changes: GridChanges<T>) => void \| Promise<void>` — fired once on Save. Return a Promise for spinner + rollback-on-reject. |
-| `onRevert` | Fired when the user discards all pending edits. |
+| Prop              | Notes                                                                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `enableEditing`   | Turn on inline editing for `editable` columns. Edits stage into a draft.                                                      |
+| `editTrigger`     | `'doubleClick'` (default) or `'click'`.                                                                                       |
+| `createRow`       | `() => T` — shows an "Add row" button (prepends + focuses). Must set a unique id.                                             |
+| `enableRowDelete` | Per-row trash/restore + bulk "Delete selected".                                                                               |
+| `onSave`          | `(changes: GridChanges<T>) => void \| Promise<void>` — fired once on Save. Return a Promise for spinner + rollback-on-reject. |
+| `onRevert`        | Fired when the user discards all pending edits.                                                                               |
 
 ```ts
 GridChanges<T> = { inserted: T[]; updated: RowEdit<T>[]; deleted: T[] };
@@ -196,22 +202,22 @@ RowEdit<T>     = { rowId, row, updatedRow, changes, previous, rowIndex };
 
 ### Data ops
 
-| Prop | Notes |
-| --- | --- |
-| `virtualized` | Row virtualization (replaces pagination; detail / grouping / tree disabled). |
-| `estimateRowHeight` | Row-height estimate for the virtualizer. |
-| `maxHeight` | Scroller max height. Required for the sticky header; for `virtualized` it defaults to `400px` (with a console warning) — set it to fit your layout. |
-| `enableExport` | Toolbar menu: Copy to clipboard (TSV), CSV, Excel (`.xls`), JSON, Print. |
-| `exportFileName` | Base filename for downloads. |
-| `grouping` | `string[]` of column ids to group by (pair with column `aggregate`). |
+| Prop                | Notes                                                                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `virtualized`       | Row virtualization (replaces pagination; detail / grouping / tree disabled).                                                                        |
+| `estimateRowHeight` | Row-height estimate for the virtualizer.                                                                                                            |
+| `maxHeight`         | Scroller max height. Required for the sticky header; for `virtualized` it defaults to `400px` (with a console warning) — set it to fit your layout. |
+| `enableExport`      | Toolbar menu: Copy to clipboard (TSV), CSV, Excel (`.xls`), JSON, Print.                                                                            |
+| `exportFileName`    | Base filename for downloads.                                                                                                                        |
+| `grouping`          | `string[]` of column ids to group by (pair with column `aggregate`).                                                                                |
 
 ### Tree / hierarchical data
 
-| Prop | Notes |
-| --- | --- |
-| `getSubRows` | `(row) => T[] \| undefined` — return a row's children to enable **tree mode** (nested expandable rows). Distinct from grouping/detail and mutually exclusive with both; ignored when `virtualized`. |
-| `treeColumnId` | Column id carrying the expand toggle + indentation (default: first data column). Forced non-hideable so the toggle stays reachable. |
-| `defaultExpanded` | Start with all tree rows expanded (default: collapsed). |
+| Prop              | Notes                                                                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getSubRows`      | `(row) => T[] \| undefined` — return a row's children to enable **tree mode** (nested expandable rows). Distinct from grouping/detail and mutually exclusive with both; ignored when `virtualized`. |
+| `treeColumnId`    | Column id carrying the expand toggle + indentation (default: first data column). Forced non-hideable so the toggle stays reachable.                                                                 |
+| `defaultExpanded` | Start with all tree rows expanded (default: collapsed).                                                                                                                                             |
 
 ### Presentation
 
@@ -221,27 +227,27 @@ RowEdit<T>     = { rowId, row, updatedRow, changes, previous, rowIndex };
 
 ### Theming with `palette`
 
-The `palette` prop re-skins the **entire** grid — both its own chrome (frame,
-header, rows, accent bar) and the embedded Mantine widgets (search box, `Select`
+The `palette` prop re-skins the **entire** grid — both its own chrome (header,
+rows, borders, accent bar) and the embedded Mantine widgets (search box, `Select`
 editors, checkboxes, menus, buttons, badges) — to match a color palette. When
 omitted, the grid follows the app's Mantine theme as usual.
 
 `palette` is a `GridPalette` object. Every key is optional; any key you omit
 falls back to the current theme, so a partial palette still themes what it can:
 
-| Key | Themes |
-| --- | --- |
-| `bg_page` | Page background (also used to detect light vs. dark). |
-| `bg_card` | Grid surface / body background. |
-| `bg_surface` | Header + alternate surfaces. |
-| `bg_hover` | Row and control hover state. |
-| `border` | Borders and dividers. |
-| `primary` | Accent / brand color (accent bar, filled + light buttons, links). |
-| `text_primary` | Primary text. |
-| `text_secondary` | Dimmed / secondary text and placeholders. |
-| `success` | Success state. |
-| `error` | Error state. |
-| `warning` | Warning state. |
+| Key              | Themes                                                            |
+| ---------------- | ----------------------------------------------------------------- |
+| `bg_page`        | Page background (also used to detect light vs. dark).             |
+| `bg_card`        | Grid surface / body background.                                   |
+| `bg_surface`     | Header + alternate surfaces.                                      |
+| `bg_hover`       | Row and control hover state.                                      |
+| `border`         | Borders and dividers.                                             |
+| `primary`        | Accent / brand color (accent bar, filled + light buttons, links). |
+| `text_primary`   | Primary text.                                                     |
+| `text_secondary` | Dimmed / secondary text and placeholders.                         |
+| `success`        | Success state.                                                    |
+| `error`          | Error state.                                                      |
+| `warning`        | Warning state.                                                    |
 
 The grid's **light/dark scheme is forced** to match the palette (derived from the
 luminance of `bg_page`/`bg_card`), regardless of the app's own theme — so a dark
@@ -252,14 +258,14 @@ palette renders a dark grid even inside a light app.
   data={users}
   columns={columns}
   palette={{
-    bg_page: '#0f1117',
-    bg_card: '#171a21',
-    bg_surface: '#1e2230',
-    bg_hover: '#232838',
-    border: '#2c3242',
-    primary: '#6366f1',
-    text_primary: '#e5e7eb',
-    text_secondary: '#9ca3af',
+    bg_page: "#0f1117",
+    bg_card: "#171a21",
+    bg_surface: "#1e2230",
+    bg_hover: "#232838",
+    border: "#2c3242",
+    primary: "#6366f1",
+    text_primary: "#e5e7eb",
+    text_secondary: "#9ca3af",
   }}
 />
 ```
@@ -282,7 +288,13 @@ palette renders a dark grid even inside a light app.
   selectAllScope="all"
   enableEditing
   enableRowDelete
-  createRow={() => ({ id: crypto.randomUUID(), name: '', email: '', age: 0, joined: '' })}
+  createRow={() => ({
+    id: crypto.randomUUID(),
+    name: "",
+    email: "",
+    age: 0,
+    joined: "",
+  })}
   onSave={async ({ inserted, updated, deleted }) => {
     await api.bulkPersist({ inserted, updated, deleted });
     setUsers(next); // resync data so the draft clears
@@ -312,7 +324,7 @@ palette renders a dark grid even inside a light app.
   enableColumnFilters
   enableExport
   exportFileName="orders"
-  grouping={['status']} // pair with a column { accessor: 'total', aggregate: 'sum' }
+  grouping={["status"]} // pair with a column { accessor: 'total', aggregate: 'sum' }
 />
 ```
 
@@ -344,8 +356,8 @@ type OrgNode = { id: string; name: string; title: string; reports?: OrgNode[] };
   columns={cols}
   getRowId={(n) => n.id}
   getSubRows={(n) => n.reports} // ← enables tree mode
-  treeColumnId="name"           // where the toggle + indent live (optional)
-  defaultExpanded               // start expanded (optional)
+  treeColumnId="name" // where the toggle + indent live (optional)
+  defaultExpanded // start expanded (optional)
 />;
 ```
 
