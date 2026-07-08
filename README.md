@@ -7,10 +7,11 @@ A powerful, fully **client-side** React data grid built on
 opt into features via props. Theme-aware (dark/light) out of the box.
 
 Multi-sort · fuzzy global search · per-column filters (text / multi-select /
-number-range / date-range) · grouping + aggregation · banded (multi-level)
-headers · inline batch editing (add / edit / delete → single Save) · row
-virtualization · column pinning / reorder / resize / show-hide · row selection ·
-expandable detail rows · export (CSV / Excel / JSON / print / clipboard).
+number-range / date-range) · grouping + aggregation · tree / hierarchical rows ·
+banded (multi-level) headers · inline batch editing (add / edit / delete → single
+Save) · row virtualization · column pinning / reorder / resize / show-hide · row
+selection · expandable detail rows · export (CSV / Excel / JSON / print /
+clipboard).
 
 ## Installation
 
@@ -152,7 +153,7 @@ standalone leaves span the header rows.
 | `columns` | — | The schema above. |
 | `getRowId` | index | Strongly recommended with selection/expansion/editing. |
 | `enableGlobalFilter` | `true` | Fuzzy (typo-tolerant) toolbar search. |
-| `enableColumnFilters` | `false` | Per-column funnel-icon filter popovers. |
+| `enableColumnFilters` | `false` | Per-column filters, opened from each column's ⋮ header menu. |
 | `enablePagination` | `true` | Ignored when `virtualized`. |
 | `pageSize` / `pageSizeOptions` | — | Page controls. |
 
@@ -197,18 +198,74 @@ RowEdit<T>     = { rowId, row, updatedRow, changes, previous, rowIndex };
 
 | Prop | Notes |
 | --- | --- |
-| `virtualized` | Row virtualization (replaces pagination; detail/grouping disabled). |
+| `virtualized` | Row virtualization (replaces pagination; detail / grouping / tree disabled). |
 | `estimateRowHeight` | Row-height estimate for the virtualizer. |
-| `maxHeight` | Required for virtualization / sticky header. |
+| `maxHeight` | Scroller max height. Required for the sticky header; for `virtualized` it defaults to `400px` (with a console warning) — set it to fit your layout. |
 | `enableExport` | Toolbar menu: Copy to clipboard (TSV), CSV, Excel (`.xls`), JSON, Print. |
 | `exportFileName` | Base filename for downloads. |
 | `grouping` | `string[]` of column ids to group by (pair with column `aggregate`). |
+
+### Tree / hierarchical data
+
+| Prop | Notes |
+| --- | --- |
+| `getSubRows` | `(row) => T[] \| undefined` — return a row's children to enable **tree mode** (nested expandable rows). Distinct from grouping/detail and mutually exclusive with both; ignored when `virtualized`. |
+| `treeColumnId` | Column id carrying the expand toggle + indentation (default: first data column). Forced non-hideable so the toggle stays reachable. |
+| `defaultExpanded` | Start with all tree rows expanded (default: collapsed). |
 
 ### Presentation
 
 `title`, `toolbarActions`, `loading` (skeletons), `emptyMessage`, `striped`,
 `highlightOnHover`, `stickyHeader`, `density` (`'compact' \| 'normal' \|
-'comfortable'`), `className`, `palette` (re-skin to a template palette).
+'comfortable'`), `className`, `palette` (re-skin to a template palette — see below).
+
+### Theming with `palette`
+
+The `palette` prop re-skins the **entire** grid — both its own chrome (frame,
+header, rows, accent bar) and the embedded Mantine widgets (search box, `Select`
+editors, checkboxes, menus, buttons, badges) — to match a color palette. When
+omitted, the grid follows the app's Mantine theme as usual.
+
+`palette` is a `GridPalette` object. Every key is optional; any key you omit
+falls back to the current theme, so a partial palette still themes what it can:
+
+| Key | Themes |
+| --- | --- |
+| `bg_page` | Page background (also used to detect light vs. dark). |
+| `bg_card` | Grid surface / body background. |
+| `bg_surface` | Header + alternate surfaces. |
+| `bg_hover` | Row and control hover state. |
+| `border` | Borders and dividers. |
+| `primary` | Accent / brand color (accent bar, filled + light buttons, links). |
+| `text_primary` | Primary text. |
+| `text_secondary` | Dimmed / secondary text and placeholders. |
+| `success` | Success state. |
+| `error` | Error state. |
+| `warning` | Warning state. |
+
+The grid's **light/dark scheme is forced** to match the palette (derived from the
+luminance of `bg_page`/`bg_card`), regardless of the app's own theme — so a dark
+palette renders a dark grid even inside a light app.
+
+```tsx
+<DataGrid<User>
+  data={users}
+  columns={columns}
+  palette={{
+    bg_page: '#0f1117',
+    bg_card: '#171a21',
+    bg_surface: '#1e2230',
+    bg_hover: '#232838',
+    border: '#2c3242',
+    primary: '#6366f1',
+    text_primary: '#e5e7eb',
+    text_secondary: '#9ca3af',
+  }}
+/>
+```
+
+> The palette shape matches the `preview` object shipped with each generated-app
+> UI theme, so a template's preview can be passed straight through as `palette`.
 
 ---
 
@@ -272,13 +329,40 @@ RowEdit<T>     = { rowId, row, updatedRow, changes, previous, rowIndex };
 />
 ```
 
+### Tree / hierarchical data
+
+Nest rows by returning each row's children from `getSubRows`. The expand toggle
+and indentation render on `treeColumnId` (defaults to the first data column);
+every other column stays flat. This is distinct from grouping (synthetic buckets)
+and detail rows (a panel under a row), and mutually exclusive with both.
+
+```tsx
+type OrgNode = { id: string; name: string; title: string; reports?: OrgNode[] };
+
+<DataGrid<OrgNode>
+  data={org}
+  columns={cols}
+  getRowId={(n) => n.id}
+  getSubRows={(n) => n.reports} // ← enables tree mode
+  treeColumnId="name"           // where the toggle + indent live (optional)
+  defaultExpanded               // start expanded (optional)
+/>;
+```
+
+> Inline editing (`enableEditing` / `createRow` / `enableRowDelete`) is flat-data
+> only and is **disabled in tree mode**.
+
 ---
 
 ## Gotchas
 
 - **`getRowId` is essential** for selection/editing — without it, edits/selection
   key off array index and break on sort/filter.
-- **Virtualization disables** pagination, detail rows, and grouping.
+- **Virtualization disables** pagination, detail rows, grouping, and tree mode.
+- **Tree mode disables inline editing** (add/edit/delete are flat-data only) and
+  can't be combined with grouping or detail rows.
+- **Hiding a filtered column clears its filter**, so it can't silently narrow the
+  data with no visible control to clear it. The tree toggle column can't be hidden.
 - **`selectAllScope` has no effect without pagination** — page == all.
 - **Excel export** produces an `.xls` HTML table; Excel may show a one-time
   format-vs-extension prompt (a true `.xlsx` would need a zip lib, which is
