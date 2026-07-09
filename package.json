@@ -1,6 +1,6 @@
 {
   "name": "@ved_patel/react-datagrid",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A powerful, fully client-side React data grid built on TanStack Table + Mantine: multi-sort, fuzzy search, per-column filters, grouping/aggregation, banded headers, inline batch editing, row virtualization, column pinning/reorder/resize, and multi-format export (CSV/Excel/JSON/print/clipboard).",
   "type": "module",
   "license": "MIT",
