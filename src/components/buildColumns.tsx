@@ -238,11 +238,12 @@ export function buildColumns<T>(
     const allScope = opts.selectAllScope !== "page";
     defs.push({
       id: SELECT_COL,
-      size: 44,
+      size: 62,
       enableSorting: false,
       enableHiding: false,
       enableResizing: false,
       enableColumnFilter: false,
+      meta: { align: "center" },
       header: ({ table }) => (
         <Checkbox
           size="xs"

@@ -50,6 +50,7 @@
   white-space: nowrap;
   user-select: none;
   border-bottom: 1px solid var(--dg-border);
+  overflow: hidden;
 }
 
 .thInner {
@@ -57,6 +58,12 @@
   align-items: center;
   gap: 6px;
   padding: 10px 12px;
+}
+
+.thLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Spanning group-header band (multi-level headers). Sits above the leaf-header
@@ -238,6 +245,7 @@
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Framework/control columns (select / expand / actions / delete) hold centered
@@ -245,6 +253,11 @@
 .controlCell {
   overflow: visible;
   text-overflow: clip;
+  text-align: center;
+}
+.controlCell > * {
+  display: inline-flex;
+  vertical-align: middle;
 }
 
 .td[data-align='center'] {

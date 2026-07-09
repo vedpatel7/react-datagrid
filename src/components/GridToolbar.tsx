@@ -182,31 +182,44 @@ export function GridToolbar<T>({
             </Menu.Target>
             <Menu.Dropdown>
               <Menu.Label>Toggle columns</Menu.Label>
-              {hideableColumns.map((column) => (
-                <Menu.Item
-                  key={column.id}
-                  onClick={() => {
-                    // Hiding a filtered column would leave an orphaned filter
-                    // with no visible control to clear it, so drop the filter
-                    // as the column is hidden.
-                    if (column.getIsVisible() && column.getIsFiltered()) {
-                      column.setFilterValue(undefined);
+              {hideableColumns.map((column) => {
+                // A column that's actively grouping the data can't be hidden —
+                // doing so would strip the grouping/aggregation view of the
+                // column it's keyed on. Show it checked but disabled instead.
+                const isGrouped = column.getIsGrouped();
+                return (
+                  <Menu.Item
+                    key={column.id}
+                    disabled={isGrouped}
+                    onClick={() => {
+                      if (isGrouped) return;
+                      // Hiding a filtered column would leave an orphaned filter
+                      // with no visible control to clear it, so drop the filter
+                      // as the column is hidden.
+                      if (column.getIsVisible() && column.getIsFiltered()) {
+                        column.setFilterValue(undefined);
+                      }
+                      column.toggleVisibility();
+                    }}
+                    leftSection={
+                      <Checkbox
+                        size="xs"
+                        checked={column.getIsVisible()}
+                        readOnly
+                        tabIndex={-1}
+                        style={{ pointerEvents: 'none' }}
+                      />
                     }
-                    column.toggleVisibility();
-                  }}
-                  leftSection={
-                    <Checkbox
-                      size="xs"
-                      checked={column.getIsVisible()}
-                      readOnly
-                      tabIndex={-1}
-                      style={{ pointerEvents: 'none' }}
-                    />
-                  }
-                >
-                  {column.columnDef.meta?.label ?? column.id}
-                </Menu.Item>
-              ))}
+                  >
+                    {column.columnDef.meta?.label ?? column.id}
+                    {isGrouped && (
+                      <Text span c="dimmed" fz="xs" ml={4}>
+                        (grouped)
+                      </Text>
+                    )}
+                  </Menu.Item>
+                );
+              })}
             </Menu.Dropdown>
           </Menu>
         )}

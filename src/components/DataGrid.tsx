@@ -1264,7 +1264,7 @@ function GroupHeaderCell<T>({ header }: { header: Header<T, unknown> }) {
           className={classes.thInner}
           data-align={header.column.columnDef.meta?.align ?? "center"}
         >
-          <span>
+          <span className={classes.thLabel}>
             {flexRender(header.column.columnDef.header, header.getContext())}
           </span>
         </div>
@@ -1379,7 +1379,7 @@ function HeaderCell<T>({
         onDragEnd={reorderable ? onDragEnd : undefined}
       >
         {header.isPlaceholder ? null : (
-          <span>
+          <span className={classes.thLabel}>
             {flexRender(column.columnDef.header, header.getContext())}
           </span>
         )}
