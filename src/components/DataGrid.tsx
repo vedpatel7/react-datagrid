@@ -92,7 +92,7 @@ import {
 } from "./buildColumns";
 import { ColumnFilter } from "./ColumnFilter";
 import { EditableCell } from "./EditableCell";
-import type { GridChanges, RowEdit } from "./types";
+import type { GridChanges } from "./types";
 import { GridToolbar } from "./GridToolbar";
 import { GridPagination } from "./GridPagination";
 import type { DataGridProps } from "./types";
@@ -464,48 +464,38 @@ export function DataGrid<T>({
   );
 
   // All pending changes derived from the draft vs baseline + insert/delete sets.
+  // Flat list — each entry is a row spread with an `action` tag. Update rows
+  // carry the final values; delete rows carry the original.
   const gridChanges = useMemo<GridChanges<T>>(() => {
-    if (!editingEnabled) return { inserted: [], updated: [], deleted: [] };
-    const inserted: T[] = [];
-    const updated: RowEdit<T>[] = [];
-    const deleted: T[] = [];
+    if (!editingEnabled) return [];
+    const out: GridChanges<T> = [];
     draft.forEach((row, index) => {
       const id = rowKey(row, index);
       if (deletedIds.has(id)) {
-        // A staged-deleted existing row (inserted rows are removed outright).
+        // Staged-delete on an existing row (inserted rows are dropped outright).
         if (!insertedIds.has(id)) {
           const base = baselineById.get(id);
-          if (base) deleted.push(base);
+          if (base) out.push({ ...base, action: "delete" });
         }
         return;
       }
       if (insertedIds.has(id)) {
-        inserted.push(row);
+        out.push({ ...row, action: "insert" });
         return;
       }
       const base = baselineById.get(id);
       if (!base) return;
-      const changes: Partial<Record<keyof T, unknown>> = {};
-      const previous: Partial<Record<keyof T, unknown>> = {};
+      let changed = false;
       for (const { field } of editFields) {
         const f = field as keyof T;
         if (row[f] !== base[f]) {
-          changes[f] = row[f];
-          previous[f] = base[f];
+          changed = true;
+          break;
         }
       }
-      if (Object.keys(changes).length) {
-        updated.push({
-          rowId: id,
-          row: base,
-          updatedRow: row,
-          changes,
-          previous,
-          rowIndex: index,
-        });
-      }
+      if (changed) out.push({ ...row, action: "update" });
     });
-    return { inserted, updated, deleted };
+    return out;
   }, [
     editingEnabled,
     draft,
@@ -557,10 +547,7 @@ export function DataGrid<T>({
     return out;
   }, [editErrors, touchedCells, submitAttempted]);
 
-  const dirtyCount =
-    gridChanges.inserted.length +
-    gridChanges.updated.length +
-    gridChanges.deleted.length;
+  const dirtyCount = gridChanges.length;
   const dirty = editingEnabled && dirtyCount > 0;
   // Full error count blocks Save; the visible count drives the badge + cell
   // styling so nothing turns red until it's been touched / a Save was tried.

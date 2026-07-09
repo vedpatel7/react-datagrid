@@ -196,9 +196,13 @@ standalone leaves span the header rows.
 | `onRevert`        | Fired when the user discards all pending edits.                                                                               |
 
 ```ts
-GridChanges<T> = { inserted: T[]; updated: RowEdit<T>[]; deleted: T[] };
-RowEdit<T>     = { rowId, row, updatedRow, changes, previous, rowIndex };
+GridChanges<T>    = GridChange<T>[];              // flat, per-row
+GridChange<T>     = T & { action: GridChangeAction };
+GridChangeAction  = 'insert' | 'update' | 'delete';
 ```
+
+Each entry is a row spread with an `action` tag. Update rows carry the final
+(post-edit) values; delete rows carry the original.
 
 ### Data ops
 
@@ -295,8 +299,12 @@ palette renders a dark grid even inside a light app.
     age: 0,
     joined: "",
   })}
-  onSave={async ({ inserted, updated, deleted }) => {
-    await api.bulkPersist({ inserted, updated, deleted });
+  onSave={async (changes) => {
+    // changes is a flat list of { action, ...row } — send it as-is, or split:
+    // const inserts = changes.filter((c) => c.action === 'insert');
+    // const updates = changes.filter((c) => c.action === 'update');
+    // const deletes = changes.filter((c) => c.action === 'delete');
+    await api.bulkPersist(changes);
     setUsers(next); // resync data so the draft clears
   }}
 />

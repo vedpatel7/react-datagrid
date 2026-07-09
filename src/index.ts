@@ -12,7 +12,8 @@ export type {
   GridEditor,
   GridCellContext,
   EditContext,
-  RowEdit,
+  GridChange,
+  GridChangeAction,
   GridChanges,
   GridPalette,
 } from './components/types';

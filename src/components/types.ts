@@ -42,29 +42,15 @@ export interface EditContext<T> {
   columnId: string;
 }
 
-/** A single existing-row edit (field-level diff). */
-export interface RowEdit<T> {
-  rowId: string;
-  /** The original row, before edits. */
-  row: T;
-  /** The row with all committed changes applied. */
-  updatedRow: T;
-  /** Only the fields that changed → their new values. */
-  changes: Partial<Record<keyof T, unknown>>;
-  /** The same fields → their previous values. */
-  previous: Partial<Record<keyof T, unknown>>;
-  rowIndex: number;
-}
+/** Which side of the batch a row falls on. */
+export type GridChangeAction = 'insert' | 'update' | 'delete';
 
-/** The full set of pending changes flushed on Save. */
-export interface GridChanges<T> {
-  /** Newly added rows (from `createRow`, with any edits applied). */
-  inserted: T[];
-  /** Existing rows with field-level edits. */
-  updated: RowEdit<T>[];
-  /** Existing rows marked for deletion (the original row objects). */
-  deleted: T[];
-}
+/** One row in the Save payload: the row's fields plus an `action` tag. Update
+ *  rows carry the final (post-edit) values; delete rows carry the original. */
+export type GridChange<T> = T & { action: GridChangeAction };
+
+/** The full set of pending changes flushed on Save — a flat list. */
+export type GridChanges<T> = GridChange<T>[];
 
 export type GridAggregation =
   | 'sum'
