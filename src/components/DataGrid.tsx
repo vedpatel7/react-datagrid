@@ -55,6 +55,7 @@ import {
   type ColumnOrderState,
   type ColumnPinningState,
   type ExpandedState,
+  type FilterFn,
   type FilterMeta,
   type GroupingState,
   type Header,
@@ -247,6 +248,21 @@ export function DataGrid<T>({
       : null;
   const themeCtx = useMemo(() => ({ portalClassName }), [portalClassName]);
 
+  // Unsaved inserted rows bypass all filtering/search — a blank new row would
+  // otherwise match nothing and be hidden (along with its just-opened editor).
+  // A ref keeps the (memoized) filter fns reading the live set without being
+  // re-created; the ref is synced to `insertedIds` state further down.
+  const insertedIdsRef = useRef<Set<string>>(new Set());
+  const isInsertedRow = useCallback(
+    (rowId: string) => insertedIdsRef.current.has(rowId),
+    [],
+  );
+  const globalFilterFn = useCallback<FilterFn<T>>(
+    (row, columnId, value, addMeta) =>
+      isInsertedRow(row.id) || fuzzyFilter(row, columnId, value, addMeta),
+    [isInsertedRow],
+  );
+
   const defs = useMemo(
     () =>
       buildColumns(columns, {
@@ -257,6 +273,7 @@ export function DataGrid<T>({
         rowActions,
         enableDelete: deleteEnabled,
         treeColumnId: treeColId,
+        isInsertedRow,
       }),
     [
       columns,
@@ -266,6 +283,7 @@ export function DataGrid<T>({
       rowActions,
       deleteEnabled,
       treeColId,
+      isInsertedRow,
     ],
   );
 
@@ -323,6 +341,9 @@ export function DataGrid<T>({
   // Ids of rows added (not yet saved) and rows staged for deletion.
   const [insertedIds, setInsertedIds] = useState<Set<string>>(() => new Set());
   const [deletedIds, setDeletedIds] = useState<Set<string>>(() => new Set());
+  // Keep the ref (declared above `defs`) pointing at the current insert set so
+  // the memoized filter fns always see it without being re-created.
+  insertedIdsRef.current = insertedIds;
   // Cells the user has actually edited (`${rowId}::${field}`), plus whether a
   // Save has been attempted. Validation errors stay hidden until a cell is
   // touched or the user tries to save — so a freshly-added blank row isn't
@@ -395,7 +416,7 @@ export function DataGrid<T>({
     // Every header click accumulates into a multi-sort (no shift needed); a
     // third click on a column removes it, and the toolbar offers "clear all".
     isMultiSortEvent: () => true,
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn,
     getRowCanExpand: useTree
       ? (row) => row.subRows.length > 0
       : useExpansion
@@ -583,9 +604,12 @@ export function DataGrid<T>({
     const id = rowKey(row, 0);
     setDraft((prev) => [row, ...prev]);
     setInsertedIds((prev) => new Set(prev).add(id));
+    // The row is prepended; jump to the first page so it's on screen (it's
+    // exempt from filters, but pagination could still park it off-page).
+    table.setPageIndex(0);
     const firstEditable = editFields[0]?.id;
     if (firstEditable) setEditingCell({ rowId: id, colId: firstEditable });
-  }, [createRow, saving, rowKey, editFields]);
+  }, [createRow, saving, rowKey, editFields, table]);
 
   // Toggle a row's pending-delete state. Inserted rows are dropped outright.
   const toggleDelete = useCallback(

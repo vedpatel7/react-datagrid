@@ -213,7 +213,7 @@ Each entry is a row spread with an `action` tag. Update rows carry the final
 | `maxHeight`         | Scroller max height. Required for the sticky header; for `virtualized` it defaults to `400px` (with a console warning) — set it to fit your layout. |
 | `enableExport`      | Toolbar menu: Copy to clipboard (TSV), CSV, Excel (`.xls`), JSON, Print.                                                                            |
 | `exportFileName`    | Base filename for downloads.                                                                                                                        |
-| `grouping`          | `string[]` of column ids to group by (pair with column `aggregate`).                                                                                |
+| `grouping`          | `string[]` of column ids to group by (pair with column `aggregate`). A column while it's grouping can't be hidden from the visibility menu.          |
 
 ### Tree / hierarchical data
 
@@ -382,7 +382,8 @@ type OrgNode = { id: string; name: string; title: string; reports?: OrgNode[] };
 - **Tree mode disables inline editing** (add/edit/delete are flat-data only) and
   can't be combined with grouping or detail rows.
 - **Hiding a filtered column clears its filter**, so it can't silently narrow the
-  data with no visible control to clear it. The tree toggle column can't be hidden.
+  data with no visible control to clear it. The tree toggle column can't be hidden,
+  and a column actively used for `grouping` can't be hidden while it's grouping.
 - **`selectAllScope` has no effect without pagination** — page == all.
 - **Excel export** produces an `.xls` HTML table; Excel may show a one-time
   format-vs-extension prompt (a true `.xlsx` would need a zip lib, which is

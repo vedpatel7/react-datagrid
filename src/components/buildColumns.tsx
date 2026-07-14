@@ -1,5 +1,6 @@
 import { ActionIcon, Checkbox } from "@mantine/core";
 import { IconChevronRight } from "@tabler/icons-react";
+import { filterFns as builtinFilterFns } from "@tanstack/react-table";
 import type {
   AccessorFn,
   CellContext,
@@ -61,6 +62,25 @@ const dateRangeFilter: FilterFn<unknown> = (row, columnId, filterValue) => {
   return true;
 };
 
+/**
+ * Wrap a column filter fn so rows flagged by `isInsertedRow` always pass —
+ * keeping unsaved inserted rows visible regardless of the active filter.
+ * Returns the base fn untouched when no predicate is supplied.
+ */
+function withInsertedBypass<T>(
+  base: FilterFn<T>,
+  isInsertedRow?: (rowId: string) => boolean,
+): FilterFn<T> {
+  if (!isInsertedRow) return base;
+  const wrapped: FilterFn<T> = (row, columnId, filterValue, addMeta) =>
+    isInsertedRow(row.id) || base(row, columnId, filterValue, addMeta);
+  // Preserve `resolveFilterValue`/`autoRemove` metadata TanStack reads off the fn.
+  return Object.assign(wrapped, {
+    resolveFilterValue: base.resolveFilterValue,
+    autoRemove: base.autoRemove,
+  });
+}
+
 export interface BuildColumnsOptions<T> {
   enableSelection: boolean;
   /** Header checkbox scope: 'all' filtered rows (default) or current 'page'. */
@@ -73,6 +93,9 @@ export interface BuildColumnsOptions<T> {
   /** Tree mode: id of the column carrying the expand toggle + indentation. It's
    *  forced non-hideable, since hiding it would remove the only expand control. */
   treeColumnId?: string;
+  /** Rows whose id satisfies this bypass every column filter — used so unsaved
+   *  inserted rows stay visible while a filter/search is active. */
+  isInsertedRow?: (rowId: string) => boolean;
 }
 
 /** Internal ids for the framework-managed columns. */
@@ -124,6 +147,7 @@ export function flattenColumns<T>(
 function buildLeaf<T>(
   col: GridColumn<T>,
   index: number,
+  isInsertedRow?: (rowId: string) => boolean,
 ): ColumnDef<T, unknown> {
   const id = resolveId(col, index);
   const filterType = col.filter && col.filter !== "none" ? col.filter : "text";
@@ -152,15 +176,18 @@ function buildLeaf<T>(
     enablePinning: col.enablePinning ?? true,
     enableColumnFilter: col.filter !== false && col.filter !== "none",
     // 'select' matches any chosen value (multi-select), 'number' filters a
-    // [min,max] range, 'text' does substring matching.
-    filterFn:
+    // [min,max] range, 'text' does substring matching. Unsaved inserted rows
+    // bypass the filter entirely so a blank new row can't be hidden.
+    filterFn: withInsertedBypass<T>(
       filterType === "select"
-        ? multiSelectFilter
+        ? (multiSelectFilter as FilterFn<T>)
         : filterType === "number"
-          ? "inNumberRange"
+          ? builtinFilterFns.inNumberRange
           : filterType === "date"
-            ? dateRangeFilter
-            : "includesString",
+            ? (dateRangeFilter as FilterFn<T>)
+            : builtinFilterFns.includesString,
+      isInsertedRow,
+    ),
     meta: {
       align: col.align,
       filterType,
@@ -328,7 +355,7 @@ export function buildColumns<T>(
       };
       return groupDef as unknown as ColumnDef<T, unknown>;
     }
-    const def = buildLeaf(node, leafIndex++);
+    const def = buildLeaf(node, leafIndex++, opts.isInsertedRow);
     // Tree mode: the expand toggle + indentation live only on this column, so
     // it must stay visible — hiding it would strip every toggle and leave rows
     // stuck in their current expand state.
